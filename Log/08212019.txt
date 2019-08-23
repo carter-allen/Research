@@ -1,0 +1,6 @@
+Commands for working with graph-tools in Docker:
+
+Link a graph-tools python container called my_graph_tools1 to the local directory, where the name inside the container for the local directory is /mydata.
+docker run -it --name my_graph_tools1 -v /Users/carter/Documents/School/Fall_2019/Research/:/mydata tiagopeixoto/graph-tool ipython
+
+
