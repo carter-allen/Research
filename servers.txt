@@ -1,0 +1,20 @@
+Server 2
+ssh -X allenc@128.23.116.105 -p 2200
+
+Server 1
+ssh -X allenc@128.23.117.197
+
+Notebooks
+https://128.23.117.197:8888/user/allenc/tree?#
+
+scp -r -P 2200 allenc@128.23.116.105:/collaboration/ /Users/carter/Desktop
+
+Gitlab
+
+carter.allen12@gmail.com
+callen
+Surf4321
+
+For long running code: nohup 
+- check status of process with ps
+

@@ -1,0 +1,9 @@
+Package: sbmlogit
+Version: 0.1
+Title: Logistic regression for degree-corrected stochastic blockmodels
+Author: Luis Carvalho
+Maintainer: Luis Carvalho <lecarval@math.bu.edu>
+Description: This package provides auxiliary routines to perform MCMC on a
+  logistic regression for SBMs. Details can be found at "..."
+Depends: igraph
+License: LGPL-3
