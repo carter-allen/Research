@@ -1,0 +1,105 @@
+---
+title: "Testing sbmlogit package"
+author: "Carter Allen"
+date: "1/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,cache = TRUE)
+```
+
+Load packages. `igraph` is required, as well as the `C` library version.
+
+```{r}
+library(igraph)
+library(igraphdata)
+library(sbmlogit)
+```
+
+Load karate data (an `igraph` object). Note that `sbmlogit` operates on data in the form of `igraph` objects.
+
+```{r}
+data("karate")
+```
+
+Obtain MCMC samples for $K = 2$ specified clusters. We can specify a two cluster model by setting `alpha = 2`, in which case $K$ is set automatically to 2, and $\alpha$ is set to $\alpha_{K \times 1} = (1/K,...,1/K)^T$. The number of MCMC iterations is controlled with `nsamples`.
+
+```{r}
+fitK2 <- sbmlogit.mcmc(graph = karate,alpha = 2,nsamples = 2000)
+```
+
+Define the `mp` ("most probable"?) function, where `apply(Sigma, 2, mp, K)` returns a $K \times N$ matrix, the transpose of which is the ${N \times K}$ matrix $\mathbf{P}$, where $P_{ij}$ is the proportion of MCMC iterations where node $i$ ($i = 1,...,N$) belonged to cluster $j$ ($j = 1,...,K$).
+
+```{r}
+# Function for map estimator
+mp = function(vec, K){
+  v = rep(1:K)
+  l = length(vec)
+  
+  for (i in 1:K){
+    v[i] = sum(vec==i)/l
+  }
+  return(v)
+}
+```
+
+Now, we apply the `which.max()` function to the matrix $\mathbf{P}$ described above to find the most probably cluster membership for each node. The `sbmlogit.remap()` function remaps the posterior estimate of $\boldsymbol\sigma$ to the canonical version described in P & C (2016).
+
+Compute estimators. 
+
+```{r}
+SigmaK2 <- fitK2$sample # posterior samples
+sigmaK2 <- apply(t(apply(SigmaK2, 2, mp, 2)), 1, which.max) # posterior estimator
+scentroidK2 <- sbmlogit.remap(sigmaK2) # remapped posterior estimator
+print(scentroidK2)
+```
+
+Evaluate model fit with WAIC.
+
+```{r}
+# function to compute WAIC
+# verify this is correct
+waic <- function(fit,burn = 0)
+{
+    S <- length(fit$lhood)
+    ls <- exp(fit$lhood[(burn+1):S])
+    w <- 2*(log(mean(ls)) - mean(log(ls)))
+    return(w)
+}
+```
+
+Compare models with varying K. 
+
+```{r,message=FALSE}
+fitK3 <- sbmlogit.mcmc(graph = karate,alpha = 3,nsamples = 1000)
+fitK4 <- sbmlogit.mcmc(graph = karate,alpha = 4,nsamples = 1000)
+fitK5 <- sbmlogit.mcmc(graph = karate,alpha = 5,nsamples = 1000)
+```
+
+```{r}
+waic(fitK2, burn = 100)
+waic(fitK3, burn = 100)
+waic(fitK4, burn = 100)
+waic(fitK5, burn = 100)
+```
+
+Conduct posterior inference for 2-class model.
+
+```{r}
+summary(fitK2$gamma)
+```
+
+```{r}
+colMeans(fitK2$eta)
+```
+
+# To-Do 
+
+- Assess the effect of degree correction
+- Fit models to more test data sets of differing community structure
+- Look into model comparison criteria
+- Look into model extensions 
+- Better understand interpretation of model parameters
+
+

@@ -1,6 +1,7 @@
 library(sbmlogit)
 library(igraph)
-library(mcclust)
+library(mcclust) 
+# Dynamic load compiled C code
 dyn.load("sbm-code/helper/newman.so")
 dyn.load("sbm-code/helper/newman_ndc.so")
 dyn.load("sbm-code/helper/nmi.so")
@@ -19,18 +20,20 @@ mp = function(vec, K){
 net <- 'polbooks'
 
 # [ Parameters ]
+# read graph as igraph object
 g <- read.graph(paste0(net, '.gml'), format='gml')
-nv <- as.integer(vcount(g)) 
-ref <- scan(paste0('ref', net, '.txt'))
+nv <- as.integer(vcount(g)) # number of nodes
+ref <- scan(paste0('ref', net, '.txt')) # reference file??
 
-ng <- 10 # #(graphs)
+ng <- 10 # number of graphs
 tau2 <- 100
 tol <- 1e-3
 nsamples <- 1000
 n0 <- 1
 
-K <- as.integer(max(ref))
-alpha <- rep(1/K, K)
+K <- as.integer(max(ref)) # number of clusters
+alpha <- rep(1/K, K) # prior parameter? (non-informative)
+# Empty MCMC storage
 runtime <- matrix(NA, nrow = ng, ncol = 3)
 centroid.label <- matrix(NA, nrow = ng, ncol = nv)
 binder.label <- matrix(NA, nrow = ng, ncol = nv)

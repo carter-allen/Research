@@ -330,7 +330,7 @@ sbmlogit.mcmc <- function (graph, alpha = 2, tau2 = 100, size = 0,
                            betastart = NULL, sigmastart = NULL,
                            gammaconstraint = T) {
   # [ init ]
-  n <- vcount(graph)
+  n <- vcount(graph) # number of nodes
   if (length(alpha) == 1) # alpha is K?
     alpha <- rep(1, alpha)
   logpi <- as.double(log(alpha / sum(alpha))) # log(prior mean)
