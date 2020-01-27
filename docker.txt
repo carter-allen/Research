@@ -14,6 +14,14 @@ docker stop (docker ps -a -q)
 
 3) Link a graph-tools python container called my_graph_tools1 to the local directory, where the name inside the container for the local directory is /mydata:
 
+On Pop OS:
+
+docker run -it --name my_graph_tools1 -v /home/carterallen/Documents/School/Research/:/mydata tiagopeixoto/graph-tool ipython
+
+import os
+os.chdir("mydata")
+
+On Mac OS:
 docker run -it --name my_graph_tools1 -v /Users/carter/Documents/School/Fall_2019/Research/:/mydata tiagopeixoto/graph-tool ipython
 
 4) Connect a new terminal to an already existing docker container. First do docker ps -a to get the container ID. 

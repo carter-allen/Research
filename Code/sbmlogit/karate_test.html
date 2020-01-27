@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Carter Allen" />
@@ -269,7 +269,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -331,6 +330,7 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -342,18 +342,6 @@ summary {
   display: none;
 }
 </style>
-
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
 
 <!-- code folding -->
 
@@ -380,16 +368,38 @@ $(document).ready(function () {
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#to-do">To-Do</a></li>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#karate-data">Karate Data</a></li>
+</ul>
+</div>
 
+<div id="to-do" class="section level1">
+<h1>To-Do</h1>
+<ul>
+<li>Assess the effect of degree correction</li>
+<li>Fit models to more test data sets of differing community structure</li>
+<li>Look into model comparison criteria</li>
+<li>Look into model extensions</li>
+<li>Better understand interpretation of model parameters</li>
+</ul>
+</div>
+<div id="intro" class="section level1">
+<h1>Intro</h1>
 <p>Load packages. <code>igraph</code> is required, as well as the <code>C</code> library version.</p>
 <pre class="r"><code>library(igraph)
 library(igraphdata)
 library(sbmlogit)</code></pre>
+</div>
+<div id="karate-data" class="section level1">
+<h1>Karate Data</h1>
 <p>Load karate data (an <code>igraph</code> object). Note that <code>sbmlogit</code> operates on data in the form of <code>igraph</code> objects.</p>
 <pre class="r"><code>data(&quot;karate&quot;)</code></pre>
 <p>Obtain MCMC samples for <span class="math inline">\(K = 2\)</span> specified clusters. We can specify a two cluster model by setting <code>alpha = 2</code>, in which case <span class="math inline">\(K\)</span> is set automatically to 2, and <span class="math inline">\(\alpha\)</span> is set to <span class="math inline">\(\alpha_{K \times 1} = (1/K,...,1/K)^T\)</span>. The number of MCMC iterations is controlled with <code>nsamples</code>.</p>
 <pre class="r"><code>fitK2 &lt;- sbmlogit.mcmc(graph = karate,alpha = 2,nsamples = 2000)</code></pre>
-<p>Define the <code>mp</code> (“most probable”?) function, where <code>apply(Sigma, 2, mp, K)</code> returns a <span class="math inline">\(K \times N\)</span> matrix, the transpose of which is the <span class="math inline">\({N \times K}\)</span> matrix <span class="math inline">\(\mathbf{P}\)</span>, where <span class="math inline">\(P_{ij}\)</span> is the proportion of MCMC iterations where node <span class="math inline">\(i\)</span> (<span class="math inline">\(i = 1,...,N\)</span>) belonged to cluster <span class="math inline">\(j\)</span> (<span class="math inline">\(j = 1,...,K\)</span>).</p>
+<p>Define the <code>mp</code> (“most probable”?) function from P &amp; C (2016), where <code>apply(Sigma, 2, mp, K)</code> returns a <span class="math inline">\(K \times N\)</span> matrix, the transpose of which is the <span class="math inline">\({N \times K}\)</span> matrix <span class="math inline">\(\mathbf{P}\)</span>, where <span class="math inline">\(P_{ij}\)</span> is the proportion of MCMC iterations where node <span class="math inline">\(i\)</span> (<span class="math inline">\(i = 1,...,N\)</span>) belonged to cluster <span class="math inline">\(j\)</span> (<span class="math inline">\(j = 1,...,K\)</span>).</p>
 <pre class="r"><code># Function for map estimator
 mp = function(vec, K){
   v = rep(1:K)
@@ -400,7 +410,7 @@ mp = function(vec, K){
   }
   return(v)
 }</code></pre>
-<p>Now, we apply the <code>which.max()</code> function to the matrix <span class="math inline">\(\mathbf{P}\)</span> described above to find the most probably cluster membership for each node. The <code>sbmlogit.remap()</code> function remaps the posterior estimate of <span class="math inline">\(\boldsymbol\sigma\)</span> to the canonical version described in P &amp; C (2016).</p>
+<p>Now, we apply the <code>which.max()</code> function to the matrix <span class="math inline">\(\mathbf{P}\)</span> described above to find the most probable cluster membership for each node. The <code>sbmlogit.remap()</code> function remaps the posterior estimate of <span class="math inline">\(\boldsymbol\sigma\)</span> to the canonical version described in P &amp; C (2016).</p>
 <p>Compute estimators.</p>
 <pre class="r"><code>SigmaK2 &lt;- fitK2$sample # posterior samples
 sigmaK2 &lt;- apply(t(apply(SigmaK2, 2, mp, 2)), 1, which.max) # posterior estimator
@@ -422,34 +432,24 @@ waic &lt;- function(fit,burn = 0)
 fitK4 &lt;- sbmlogit.mcmc(graph = karate,alpha = 4,nsamples = 1000)
 fitK5 &lt;- sbmlogit.mcmc(graph = karate,alpha = 5,nsamples = 1000)</code></pre>
 <pre class="r"><code>waic(fitK2, burn = 100)</code></pre>
-<pre><code>## [1] 34.676</code></pre>
+<pre><code>## [1] 39.20734</code></pre>
 <pre class="r"><code>waic(fitK3, burn = 100)</code></pre>
-<pre><code>## [1] 42.08319</code></pre>
+<pre><code>## [1] 45.28439</code></pre>
 <pre class="r"><code>waic(fitK4, burn = 100)</code></pre>
-<pre><code>## [1] Inf</code></pre>
+<pre><code>## [1] 96.35196</code></pre>
 <pre class="r"><code>waic(fitK5, burn = 100)</code></pre>
-<pre><code>## [1] 144.9572</code></pre>
-<p>Conduct posterior inference for 2-class model.</p>
-<pre class="r"><code>summary(fitK2$gamma)</code></pre>
-<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-## -6.63459 -4.23040 -3.82453 -3.82129 -3.39606 -0.01448</code></pre>
+<pre><code>## [1] Inf</code></pre>
+<p>Conduct posterior inference for 2-class model. In this case, <code>fitK2$gamma</code> contains the posterior samples of <span class="math inline">\(\gamma_{12}\)</span>. In general, there are <span class="math inline">\(K \choose 2\)</span> of the <span class="math inline">\(\gamma\)</span> parameters: <span class="math inline">\(\gamma_{12},...,\gamma_{K-1,K}\)</span>, since the authors set <span class="math inline">\(\gamma_{11} = \gamma_{22} = ... = \gamma_{KK} = 0\)</span> for identifiability purposes. Below is a summary of the posterior distribution of <span class="math inline">\(\gamma_{12}\)</span> for the two cluster model.</p>
+<pre class="r"><code>source('~/Documents/School/Research/Code/sbmlogit/mean_CRI.R')</code></pre>
+<pre class="r"><code>mean_CRI(fitK2$gamma)</code></pre>
+<pre><code>## [1] &quot;-3.97 (-5.29, -2.91)&quot;</code></pre>
 <pre class="r"><code>colMeans(fitK2$eta)</code></pre>
-<pre><code>##  [1]  2.98093169  1.12822716  1.35670969  0.07141551 -1.45666127
-##  [6] -0.82647058 -0.88767426 -0.83331160 -0.33237273 -2.28750542
-## [11] -1.46814570 -3.32962740 -2.32766700 -0.39308684 -2.22140013
-## [16] -2.20354595 -2.34304401 -2.24138344 -2.27515568 -1.53538843
-## [21] -2.18151055 -2.22090099 -2.18803712 -0.35271020 -1.43565272
-## [26] -1.49018263 -2.31399018 -0.74355476 -1.43304018 -0.80511353
-## [31] -0.89285175  0.03563728  1.79266999  2.98083381</code></pre>
-<div id="to-do" class="section level1">
-<h1>To-Do</h1>
-<ul>
-<li>Assess the effect of degree correctiom</li>
-<li>Fit models to more test data sets of differing community structure</li>
-<li>Look into model comparison criteria</li>
-<li>Look into model extensions</li>
-<li>Better understand interpretation of model parameters</li>
-</ul>
+<pre><code>##  [1]  3.09287395  1.17572662  1.41215185  0.11322474 -1.54616752 -0.91338594
+##  [7] -0.89072375 -0.88227776 -0.37533796 -2.29869331 -1.53591666 -3.62705534
+## [13] -2.35143142 -0.30899735 -2.33183844 -2.38574613 -2.33863065 -2.31126692
+## [19] -2.27563982 -1.55638946 -2.30443595 -2.31832031 -2.34169176 -0.40879915
+## [25] -1.47530384 -1.53681731 -2.22862483 -0.86059977 -1.47757516 -0.89671436
+## [31] -0.90331810  0.06203657  1.84799817  3.10584819</code></pre>
 </div>
 
 
@@ -469,6 +469,23 @@ $(document).ready(function () {
 
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>

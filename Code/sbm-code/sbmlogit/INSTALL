@@ -1,0 +1,5 @@
+To install this package you need the C version of the igraph library
+("libigraph"), and it needs to be the same version of the library installed by
+R package "igraph". If you do not install libigraph at "/usr/local", change
+the Makevars file under "src" to match the installation dir.
+

@@ -1,0 +1,4 @@
+useDynLib(sbmlogit, .registration = TRUE, .fixes = "S_")
+export(sbmlogit.remap, sbmlogit.plot, sbmlogit.nc.map, sbmlogit.map,
+        sbmlogit.mcmc)
+

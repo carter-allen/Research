@@ -2,12 +2,24 @@
 title: "Testing sbmlogit package"
 author: "Carter Allen"
 date: "1/20/2020"
-output: html_document
+output: 
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,cache = TRUE)
 ```
+
+# To-Do 
+
+- Assess the effect of degree correction
+- Fit models to more test data sets of differing community structure
+- Look into model comparison criteria
+- Look into model extensions 
+- Better understand interpretation of model parameters
+
+# Intro 
 
 Load packages. `igraph` is required, as well as the `C` library version.
 
@@ -16,6 +28,8 @@ library(igraph)
 library(igraphdata)
 library(sbmlogit)
 ```
+
+# Karate Data
 
 Load karate data (an `igraph` object). Note that `sbmlogit` operates on data in the form of `igraph` objects.
 
@@ -29,7 +43,7 @@ Obtain MCMC samples for $K = 2$ specified clusters. We can specify a two cluster
 fitK2 <- sbmlogit.mcmc(graph = karate,alpha = 2,nsamples = 2000)
 ```
 
-Define the `mp` ("most probable"?) function, where `apply(Sigma, 2, mp, K)` returns a $K \times N$ matrix, the transpose of which is the ${N \times K}$ matrix $\mathbf{P}$, where $P_{ij}$ is the proportion of MCMC iterations where node $i$ ($i = 1,...,N$) belonged to cluster $j$ ($j = 1,...,K$).
+Define the `mp` ("most probable"?) function from P & C (2016), where `apply(Sigma, 2, mp, K)` returns a $K \times N$ matrix, the transpose of which is the ${N \times K}$ matrix $\mathbf{P}$, where $P_{ij}$ is the proportion of MCMC iterations where node $i$ ($i = 1,...,N$) belonged to cluster $j$ ($j = 1,...,K$).
 
 ```{r}
 # Function for map estimator
@@ -44,7 +58,7 @@ mp = function(vec, K){
 }
 ```
 
-Now, we apply the `which.max()` function to the matrix $\mathbf{P}$ described above to find the most probably cluster membership for each node. The `sbmlogit.remap()` function remaps the posterior estimate of $\boldsymbol\sigma$ to the canonical version described in P & C (2016).
+Now, we apply the `which.max()` function to the matrix $\mathbf{P}$ described above to find the most probable cluster membership for each node. The `sbmlogit.remap()` function remaps the posterior estimate of $\boldsymbol\sigma$ to the canonical version described in P & C (2016).
 
 Compute estimators. 
 
@@ -84,22 +98,28 @@ waic(fitK4, burn = 100)
 waic(fitK5, burn = 100)
 ```
 
-Conduct posterior inference for 2-class model.
+Conduct posterior inference for 2-class model. In this case, `fitK2$gamma` contains the posterior samples of $\gamma_{12}$. In general, there are $K \choose 2$ of the $\gamma$ parameters: $\gamma_{12},...,\gamma_{K-1,K}$, since the authors set $\gamma_{11} = \gamma_{22} = ... = \gamma_{KK} = 0$ for identifiability purposes. Below is a summary of the posterior distribution of $\gamma_{12}$ for the two cluster model. 
 
 ```{r}
-summary(fitK2$gamma)
+source('~/Documents/School/Research/Code/sbmlogit/mean_CRI.R')
 ```
+
+```{r}
+mean_CRI(fitK2$gamma)
+```
+
+We can see that the posterior mean and 95\% credible interval for $\gamma_{12}$ are less than 0 -- the intra-community connectivity of the graph enforced by assuming $\gamma_{11} = \gamma_{22} = 0$. Thus, there is significantly less propensity for edges to exist _between_ the two communities than _within_ the two communities. This is indicative of strong assortative community structure. 
+
+The remaining parameters to infer are $\eta_1,...,\eta_{N}$, where $N = 34$ is the number of nodes in the karate graph. Each $\eta_i$ accounts for the expected degree of node $i$ on the logit scale. The authors refer to this as _node correction_ as well as the more common _degree correction_.  
 
 ```{r}
 colMeans(fitK2$eta)
 ```
 
-# To-Do 
 
-- Assess the effect of degree correction
-- Fit models to more test data sets of differing community structure
-- Look into model comparison criteria
-- Look into model extensions 
-- Better understand interpretation of model parameters
+
+
+
+
 
 
