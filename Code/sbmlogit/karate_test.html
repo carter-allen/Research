@@ -379,7 +379,8 @@ summary {
 <div id="to-do" class="section level1">
 <h1>To-Do</h1>
 <ul>
-<li>Assess the effect of degree correction</li>
+<li>Create plotting functions</li>
+<li>Assess the effect of degree correction (see P &amp; C section 7.2.1)</li>
 <li>Fit models to more test data sets of differing community structure</li>
 <li>Look into model comparison criteria</li>
 <li>Look into model extensions</li>
@@ -400,7 +401,7 @@ library(sbmlogit)</code></pre>
 <p>Obtain MCMC samples for <span class="math inline">\(K = 2\)</span> specified clusters. We can specify a two cluster model by setting <code>alpha = 2</code>, in which case <span class="math inline">\(K\)</span> is set automatically to 2, and <span class="math inline">\(\alpha\)</span> is set to <span class="math inline">\(\alpha_{K \times 1} = (1/K,...,1/K)^T\)</span>. The number of MCMC iterations is controlled with <code>nsamples</code>.</p>
 <pre class="r"><code>fitK2 &lt;- sbmlogit.mcmc(graph = karate,alpha = 2,nsamples = 2000)</code></pre>
 <p>Define the <code>mp</code> (“most probable”?) function from P &amp; C (2016), where <code>apply(Sigma, 2, mp, K)</code> returns a <span class="math inline">\(K \times N\)</span> matrix, the transpose of which is the <span class="math inline">\({N \times K}\)</span> matrix <span class="math inline">\(\mathbf{P}\)</span>, where <span class="math inline">\(P_{ij}\)</span> is the proportion of MCMC iterations where node <span class="math inline">\(i\)</span> (<span class="math inline">\(i = 1,...,N\)</span>) belonged to cluster <span class="math inline">\(j\)</span> (<span class="math inline">\(j = 1,...,K\)</span>).</p>
-<pre class="r"><code># Function for map estimator
+<pre class="r"><code># Function for estimator
 mp = function(vec, K){
   v = rep(1:K)
   l = length(vec)
@@ -443,13 +444,25 @@ fitK5 &lt;- sbmlogit.mcmc(graph = karate,alpha = 5,nsamples = 1000)</code></pre>
 <pre class="r"><code>source('~/Documents/School/Research/Code/sbmlogit/mean_CRI.R')</code></pre>
 <pre class="r"><code>mean_CRI(fitK2$gamma)</code></pre>
 <pre><code>## [1] &quot;-3.97 (-5.29, -2.91)&quot;</code></pre>
-<pre class="r"><code>colMeans(fitK2$eta)</code></pre>
-<pre><code>##  [1]  3.09287395  1.17572662  1.41215185  0.11322474 -1.54616752 -0.91338594
-##  [7] -0.89072375 -0.88227776 -0.37533796 -2.29869331 -1.53591666 -3.62705534
-## [13] -2.35143142 -0.30899735 -2.33183844 -2.38574613 -2.33863065 -2.31126692
-## [19] -2.27563982 -1.55638946 -2.30443595 -2.31832031 -2.34169176 -0.40879915
-## [25] -1.47530384 -1.53681731 -2.22862483 -0.86059977 -1.47757516 -0.89671436
-## [31] -0.90331810  0.06203657  1.84799817  3.10584819</code></pre>
+<p>We can see that the posterior mean and 95% credible interval for <span class="math inline">\(\gamma_{12}\)</span> are less than 0 – the intra-community connectivity of the graph enforced by assuming <span class="math inline">\(\gamma_{11} = \gamma_{22} = 0\)</span>. Thus, there is significantly less propensity for edges to exist <em>between</em> the two communities than <em>within</em> the two communities. This is indicative of strong assortative community structure.</p>
+<p>The remaining parameters to infer are <span class="math inline">\(\eta_1,...,\eta_{N}\)</span>, where <span class="math inline">\(N = 34\)</span> is the number of nodes in the karate graph. Each <span class="math inline">\(\eta_i\)</span> accounts for the expected degree of node <span class="math inline">\(i\)</span> on the logit scale. The authors refer to this as <em>node correction</em> as well as the more common <em>degree correction</em>. Thus, <span class="math inline">\(\text{logit}^{-1}(\eta_i)\)</span> is the expected degree of node <span class="math inline">\(i\)</span>.</p>
+<pre class="r"><code>expit &lt;- function(l)
+{
+  return(exp(l)/(1+exp(l)))
+}</code></pre>
+<pre class="r"><code>expit(colMeans(fitK2$eta))</code></pre>
+<pre><code>##  [1] 0.95659784 0.76417857 0.80410512 0.52827598 0.17564049 0.28630747
+##  [7] 0.29096049 0.29270599 0.40725181 0.09123124 0.17712966 0.02590544
+## [13] 0.08695206 0.42335949 0.08852022 0.08426610 0.08797372 0.09019413
+## [19] 0.09316066 0.17416535 0.09075624 0.08961700 0.08772842 0.39920010
+## [25] 0.18613779 0.17699842 0.09720926 0.29721405 0.18579396 0.28972617
+## [31] 0.28836910 0.51550417 0.86389189 0.95713333</code></pre>
+<p>We can see that the nodes with the highest expected degree are the actual “hubs” (i.e., the karate teachers), as the <code>karate</code> data are arranged such that the first and the last nodes are the two karate teachers.</p>
+<pre class="r"><code>source(&quot;plot_sbmlogit.R&quot;)
+fitK2_plot &lt;- plot_sbmlogit(fitK2)
+ggsave(filename = &quot;karate_fit.jpg&quot;,
+       plot = fitK2_plot,
+       device = &quot;jpg&quot;)</code></pre>
 </div>
 
 

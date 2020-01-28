@@ -13,7 +13,8 @@ knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,cache = TRUE)
 
 # To-Do 
 
-- Assess the effect of degree correction
+- Create plotting functions
+- Assess the effect of degree correction (see P & C section 7.2.1)
 - Fit models to more test data sets of differing community structure
 - Look into model comparison criteria
 - Look into model extensions 
@@ -46,7 +47,7 @@ fitK2 <- sbmlogit.mcmc(graph = karate,alpha = 2,nsamples = 2000)
 Define the `mp` ("most probable"?) function from P & C (2016), where `apply(Sigma, 2, mp, K)` returns a $K \times N$ matrix, the transpose of which is the ${N \times K}$ matrix $\mathbf{P}$, where $P_{ij}$ is the proportion of MCMC iterations where node $i$ ($i = 1,...,N$) belonged to cluster $j$ ($j = 1,...,K$).
 
 ```{r}
-# Function for map estimator
+# Function for estimator
 mp = function(vec, K){
   v = rep(1:K)
   l = length(vec)
@@ -101,7 +102,7 @@ waic(fitK5, burn = 100)
 Conduct posterior inference for 2-class model. In this case, `fitK2$gamma` contains the posterior samples of $\gamma_{12}$. In general, there are $K \choose 2$ of the $\gamma$ parameters: $\gamma_{12},...,\gamma_{K-1,K}$, since the authors set $\gamma_{11} = \gamma_{22} = ... = \gamma_{KK} = 0$ for identifiability purposes. Below is a summary of the posterior distribution of $\gamma_{12}$ for the two cluster model. 
 
 ```{r}
-source('~/Documents/School/Research/Code/sbmlogit/mean_CRI.R')
+source("mean_CRI.R")
 ```
 
 ```{r}
@@ -110,11 +111,32 @@ mean_CRI(fitK2$gamma)
 
 We can see that the posterior mean and 95\% credible interval for $\gamma_{12}$ are less than 0 -- the intra-community connectivity of the graph enforced by assuming $\gamma_{11} = \gamma_{22} = 0$. Thus, there is significantly less propensity for edges to exist _between_ the two communities than _within_ the two communities. This is indicative of strong assortative community structure. 
 
-The remaining parameters to infer are $\eta_1,...,\eta_{N}$, where $N = 34$ is the number of nodes in the karate graph. Each $\eta_i$ accounts for the expected degree of node $i$ on the logit scale. The authors refer to this as _node correction_ as well as the more common _degree correction_.  
+The remaining parameters to infer are $\eta_1,...,\eta_{N}$, where $N = 34$ is the number of nodes in the karate graph. Each $\eta_i$ accounts for the expected degree of node $i$ on the logit scale. The authors refer to this as _node correction_ as well as the more common _degree correction_. Thus, $\text{logit}^{-1}(\eta_i)$ is the expected degree of node $i$.
 
 ```{r}
-colMeans(fitK2$eta)
+expit <- function(l)
+{
+  return(exp(l)/(1+exp(l)))
+}
 ```
+
+
+```{r}
+expit(colMeans(fitK2$eta))
+```
+
+We can see that the nodes with the highest expected degree are the actual "hubs" (i.e., the karate teachers), as the `karate` data are arranged such that the first and the last nodes are the two karate teachers. 
+
+```{r}
+source("plot_sbmlogit.R")
+fitK2_plot <- plot_sbmlogit(fitK2, ground = "color")
+ggsave(filename = "karate_fit.jpg",
+       plot = fitK2_plot,
+       device = "jpg")
+```
+
+
+
 
 
 
