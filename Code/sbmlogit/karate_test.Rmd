@@ -28,6 +28,10 @@ Load packages. `igraph` is required, as well as the `C` library version.
 library(igraph)
 library(igraphdata)
 library(sbmlogit)
+library(sbmlhelpers)
+library(ggraph)
+library(tidygraph)
+library(tidyverse)
 ```
 
 # Karate Data
@@ -102,10 +106,6 @@ waic(fitK5, burn = 100)
 Conduct posterior inference for 2-class model. In this case, `fitK2$gamma` contains the posterior samples of $\gamma_{12}$. In general, there are $K \choose 2$ of the $\gamma$ parameters: $\gamma_{12},...,\gamma_{K-1,K}$, since the authors set $\gamma_{11} = \gamma_{22} = ... = \gamma_{KK} = 0$ for identifiability purposes. Below is a summary of the posterior distribution of $\gamma_{12}$ for the two cluster model. 
 
 ```{r}
-source("mean_CRI.R")
-```
-
-```{r}
 mean_CRI(fitK2$gamma)
 ```
 
@@ -120,19 +120,16 @@ expit <- function(l)
 }
 ```
 
-
 ```{r}
 expit(colMeans(fitK2$eta))
 ```
 
 We can see that the nodes with the highest expected degree are the actual "hubs" (i.e., the karate teachers), as the `karate` data are arranged such that the first and the last nodes are the two karate teachers. 
 
+To plot the estimated communities of the graph, we can use the custom function `plot_sbmlogit()`.
+
 ```{r}
-source("plot_sbmlogit.R")
-fitK2_plot <- plot_sbmlogit(fitK2, ground = "color")
-ggsave(filename = "karate_fit.jpg",
-       plot = fitK2_plot,
-       device = "jpg")
+plot_sbmlogit(fitK2, ground = "color")
 ```
 
 
