@@ -32,6 +32,7 @@ library(sbmlhelpers)
 library(ggraph)
 library(tidygraph)
 library(tidyverse)
+library(coda)
 ```
 
 # Karate Data
@@ -103,7 +104,22 @@ waic(fitK4, burn = 100)
 waic(fitK5, burn = 100)
 ```
 
-Conduct posterior inference for 2-class model. In this case, `fitK2$gamma` contains the posterior samples of $\gamma_{12}$. In general, there are $K \choose 2$ of the $\gamma$ parameters: $\gamma_{12},...,\gamma_{K-1,K}$, since the authors set $\gamma_{11} = \gamma_{22} = ... = \gamma_{KK} = 0$ for identifiability purposes. Below is a summary of the posterior distribution of $\gamma_{12}$ for the two cluster model. 
+Alternatively, we could inventigate posterior distributions of model log-likelihood. We note however that this approach does not properly penalize for model complexity. 
+
+```{r}
+lls_df <- as.data.frame(cbind(fitK2$lhood,fitK3$lhood,fitK4$lhood,fitK5$lhood))
+colnames(lls_df) <- c("K2","K3","K4","K5")
+lls_df <- lls_df %>% 
+  gather(key = "Model", value = "ll")
+ggplot(data = lls_df,
+       aes(x = ll)) + 
+  geom_histogram(bins = 30) + 
+  facet_wrap(~ Model, nrow = 4) +
+  scale_x_continuous(limits = c(-500,-200))
+```
+
+
+Next, let's conduct posterior inference for 2-class model. In this case, `fitK2$gamma` contains the posterior samples of $\gamma_{12}$. In general, there are $K \choose 2$ of the $\gamma$ parameters: $\gamma_{12},...,\gamma_{K-1,K}$, since the authors set $\gamma_{11} = \gamma_{22} = ... = \gamma_{KK} = 0$ for identifiability purposes. Below is a summary of the posterior distribution of $\gamma_{12}$ for the two cluster model. 
 
 ```{r}
 mean_CRI(fitK2$gamma)
@@ -132,13 +148,63 @@ To plot the estimated communities of the graph, we can use the custom function `
 plot_sbmlogit(fitK2, ground = "color")
 ```
 
+# UK Faculty Network
+
+The UK faculty network data set is an `igraph` data set included in the `igraphdata` package. The network consists of friendships between 81 faculty at a university in the UK, with 817 directed and weighted edges. First, let's read in the `UKfaculty` data and save it as an undirected version, `UKfac`.
+
+```{r}
+data("UKfaculty")
+UKfac <- as.undirected(UKfaculty)
+```
+
+In the `UKfac` data, each individual's school is saved to the `Group` node attribute. We can use this information to obtain a view of the possible ground truth community memberships. 
+
+```{r}
+UKfac <- UKfac %>%
+  as_tbl_graph() %>%
+  activate(nodes) %>%
+  mutate(school = as.factor(Group)) %>%
+  as.igraph()
+```
 
 
+```{r}
+ggraph(UKfac,layout = "kk") +
+  geom_edge_link(alpha = 0.25) + 
+  geom_node_point(size = 4, aes(color = school)) + 
+  theme_void()
+```
 
+As before, we can fit SBM logit models with varying values of K and assess model fit using WAIC. 
+```{r}
+fitK2 <- sbmlogit.mcmc(UKfac,alpha = 2,nsamples = 5000)
+fitK3 <- sbmlogit.mcmc(UKfac,alpha = 3,nsamples = 5000)
+fitK4 <- sbmlogit.mcmc(UKfac,alpha = 4,nsamples = 5000)
+fitK5 <- sbmlogit.mcmc(UKfac,alpha = 5,nsamples = 5000)
+```
 
+```{r}
+plot_sbmlogit(fitK2,ground = "school",alpha = 0.25)
+```
 
+```{r}
+plot_sbmlogit(fitK3,ground = "school", alpha = 0.25)
+```
 
+```{r}
+plot_sbmlogit(fitK4,ground = "school", alpha = 0.25)
+```
 
+```{r}
+plot_sbmlogit(fitK5,ground = "school", alpha = 0.25)
+```
 
+```{r}
+apply(fitK4$gamma, 2, mean_CRI)
+```
+
+```{r}
+geweke.diag(fitK4$gamma[4001:5000,])
+```
 
 

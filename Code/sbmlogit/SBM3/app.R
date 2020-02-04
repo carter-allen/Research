@@ -47,7 +47,8 @@ ui <- fluidPage(
                         "Number of MCMC iterations",
                         min = 1000,
                         max = 10000,
-                        value = 2000),
+                        value = 2000,
+                        step = 1000),
             actionButton("run",label = "Run Model")
         ),
         # Show a plot of the generated distribution

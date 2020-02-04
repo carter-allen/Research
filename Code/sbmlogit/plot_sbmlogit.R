@@ -29,12 +29,16 @@ plot_sbmlogit <- function(fit, ground = NULL)
             graph = fit$graph %>% # should be an igraph object
                 as_tbl_graph() %>%
                 activate(nodes) %>%
-                mutate(sig = sigma)
+                mutate(sig = sigma,
+                       eta = colMeans(fit$eta),
+                       id = as.numeric(V(fit$graph)))
             
             p = ggraph(graph,layout = "kk") + 
                 geom_edge_link(alpha = 0.5) +
-                geom_node_point(aes(color = sig),
-                                size = 5) + 
+                geom_node_point(aes(color = sig,
+                                    size = eta)) + 
+                geom_node_text(aes(label = id),
+                               size = 3) + 
                 theme_void()
         }
         # in the case the user provided a valid string parameter
@@ -49,13 +53,17 @@ plot_sbmlogit <- function(fit, ground = NULL)
                 as_tbl_graph() %>%
                 activate(nodes) %>%
                 mutate(sig = sigma,
-                       true = as.factor(ground))
+                       true = as.factor(ground),
+                       eta = colMeans(fit$eta),
+                       id = as.numeric(V(fit$graph)))
             
             p = ggraph(graph,layout = "kk") + 
                 geom_edge_link(alpha = 0.5) +
                 geom_node_point(aes(color = sig,
-                                    shape = true),
-                                size = 5) + 
+                                    shape = true,
+                                    size = eta)) + 
+                geom_node_text(aes(label = id),
+                               size = 3) + 
                 theme_void()
         }
     }
@@ -65,12 +73,16 @@ plot_sbmlogit <- function(fit, ground = NULL)
         graph = fit$graph %>% # should be an igraph object
             as_tbl_graph() %>%
             activate(nodes) %>%
-            mutate(sig = sigma)
+            mutate(sig = sigma,
+                   eta = colMeans(fit$eta),
+                   id = as.numeric(V(fit$graph)))
         
         p = ggraph(graph,layout = "kk") + 
             geom_edge_link(alpha = 0.5) +
-            geom_node_point(aes(color = sig),
-                            size = 5) + 
+            geom_node_point(aes(color = sig,
+                                size = eta)) + 
+            geom_node_text(aes(label = id),
+                           size = 3) + 
             theme_void()
     }
     
