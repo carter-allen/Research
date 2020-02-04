@@ -2,9 +2,11 @@
 title: "Testing sbmlogit package"
 author: "Carter Allen"
 date: "1/20/2020"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -199,12 +201,48 @@ plot_sbmlogit(fitK4,ground = "school", alpha = 0.25)
 plot_sbmlogit(fitK5,ground = "school", alpha = 0.25)
 ```
 
+For the 4 cluster model, we can assess the degree of community structure by investigating the $\gamma$ terms. 
+
 ```{r}
 apply(fitK4$gamma, 2, mean_CRI)
 ```
 
+It appears there is strong evidence of assortative community structure in the `UKfaculty` data since all inter-community $\gamma$ parameters are negative and 95% credible intervals do not contain 0. We can make sense of the posterior community allotment by relating the inferred labels to the school membership of each faculty. To do so, we will obtain the inferred labeling from the `fitK4` model using the `get_labels()` function, and compare that to the school membership vector remapped to the canonical space. 
+
 ```{r}
-geweke.diag(fitK4$gamma[4001:5000,])
+sigmaK4 <- get_labels(fitK4)
+schools <- UKfaculty %>%
+  as_tbl_graph() %>%
+  activate(nodes) %>%
+  pull(Group) %>%
+  sbmlogit.remap()
 ```
 
+```{r}
+table(sigmaK4,schools)
+```
+
+It appears that the inferred communities largely agree with the true school membership with the exception of the faculty in school 4, of which there were only 2. The 4 cluster model placed only one of the faculty from school 4 into cluster 4, but it placed 9 faculty from the other schools into cluster 4. This suggests that maybe the 3 cluster model would be a better choice. 
+
+```{r}
+sigmaK3 <- get_labels(fitK3)
+table(sigmaK3,schools)
+```
+
+From the 3 cluster model, we can see that all faculty from school 1 are placed in cluster 1, with no other members in cluster 1. The model's cluster 2 is made up of the 33 members of school 2 as well as the two members of school 4. The model's cluster 3 is made up of entirely the faculty of school 3. We can further investigate the parameters of the three cluster model below. 
+
+```{r}
+apply(fitK3$gamma, 2, mean_CRI)
+```
+
+From the $\gamma$ parameters above, we can see that there is strong assortative community structure in the three cluster model. We can assess the presence of hub nodes by investigating the $\eta$ parameters. 
+
+```{r}
+colMeans(fitK3$eta) %>% sort()
+```
+
+
+```{r}
+geweke.diag(fitK3$gamma[4001:5000,])
+```
 
