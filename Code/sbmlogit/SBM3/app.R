@@ -14,7 +14,7 @@ library(ggraph)
 library(tidygraph)
 library(tidyverse)
 library(igraphdata)
-setwd("/home/carterallen/Documents/School/Research/Code/sbmlogit/SBM3")
+setwd("~/Documents/School/Research/Code/sbmlogit/SBM3")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -49,14 +49,15 @@ ui <- fluidPage(
                         max = 10000,
                         value = 2000,
                         step = 1000),
-            actionButton("run",label = "Run Model")
+            actionButton("run",label = "Run Model"),
+            actionButton("plot", label = "Plot Fit"),
+            actionButton("show_posts", label = "Show Community Structure")
         ),
         # Show a plot of the generated distribution
         mainPanel(
-           h3("Observed Data"),
            plotOutput("graphPlot"),
-           h3("Inferred Partition"),
-           plotOutput("fitPlot")
+           plotOutput("fitPlot"),
+           plotOutput("gammaPlot")
         )
     )
 )
@@ -64,16 +65,32 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
     
-    
-    show_fit <- eventReactive(input$run,
+    fit_model <- eventReactive(input$run,
                               {
-                                  path = paste0("data/",input$dataset,".Rdata")
-                                  load(path)
-                                  fit = sbmlogit.mcmc(graph = g,
-                                                      alpha = input$K,
-                                                      nsamples = input$niter)
-                                  f = plot_sbmlogit(fit)
-                                  f
+                                  withProgress(message = "Fitting model", 
+                                               value = 0,
+                                               {
+                                                   path = paste0("data/",input$dataset,".Rdata")
+                                                   load(path)
+                                                   fit = sbmlogit.mcmc(graph = g,
+                                                                       alpha = input$K,
+                                                                       nsamples = input$niter)
+                                                   save(fit,file = "temp_fit.Rdata")
+                                                   
+                                               })
+                                  
+                              })
+    
+    show_fit <- eventReactive(input$plot,
+                              {
+                                  withProgress(message = "Plotting fit", 
+                                               value = 0,
+                                               {
+                                                   load("temp_fit.Rdata")
+                                                   f = plot_sbmlogit(fit) + ggtitle("Inferred partition:")
+                                                   f
+                                               })
+                                  
                               })
 
     output$graphPlot <- renderPlot({
@@ -82,11 +99,13 @@ server <- function(input, output) {
         p = ggraph(g,layout = "kk") + 
             geom_node_point(size = 4) + 
             geom_edge_link(alpha = 0.50) + 
-            theme_void()
+            theme_void() + 
+            ggtitle("Observed graph:")
         p
     })
     
     output$fitPlot <- renderPlot({
+        fit_model()
         show_fit()
     })
 }
