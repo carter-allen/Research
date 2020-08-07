@@ -1,2 +1,17 @@
 Data/
 .Rproj.user
+.DS_Store
+.RData
+.Rhistory
+._.DS_Store
+._.Rproj.user
+._Code
+._Literature
+._Notes
+._README.md
+._Research.Rproj
+._Slides
+._docker.txt
+._servers.txt
+docker.txt
+servers.txt
