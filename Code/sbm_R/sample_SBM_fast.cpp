@@ -10,7 +10,7 @@ NumericVector sample_SBM_fast(NumericVector z, NumericMatrix P)
     {
         for(int j = 0; j < i; j++)
         {
-            int aij = R::rbinom(1,P(z[i],z[j]));
+            int aij = R::rbinom(1,P(z[i] - 1,z[j] - 1));
             A(i,j) = aij;
             A(j,i) = aij;
         }
