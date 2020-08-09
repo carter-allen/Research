@@ -1,5 +1,5 @@
 library(igraph) ; library(MCMCpack)
-setwd("~/Documents/School/Research/Code/sbm_R")
+#setwd("~/Documents/School/Research/Code/sbm_R")
 rm(list = ls())
 
 # input data
