@@ -59,7 +59,7 @@ fit_SBM <- function(A,
     }
     close(pb)
     run.time<-proc.time()-start.time
-    print(paste("Finished MCMC after",run.time[1],"seconds"))
+    cat("Finished MCMC after",run.time[1],"seconds")
     
     ret_list <- list(A = A,
                      K = K,

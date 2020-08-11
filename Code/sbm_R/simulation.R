@@ -14,6 +14,8 @@ Rcpp::sourceCpp("logf_z_given_A.cpp")
 Rcpp::sourceCpp("update_counts.cpp")
 Rcpp::sourceCpp("rdirichlet.cpp")
 source("fit_SBM_MCMC_fast.R")
+#source("plotSBM.R")
+#source("printSBM.R")
 
 # GENERATE DATA
 # Symmetric, non-reflexive 
