@@ -4,23 +4,25 @@ library(sbmlhelpers)
 library(tidygraph)
 library(ggraph)
 library(igraph)
+library(mlsbm)
+library(parallel)
 #setwd("~/Documents/School/Research/Code/mlsbm_R")
-setwd("~/Documents/Research/Code/mlsbm_R")
+#setwd("~/Documents/Research/Code/mlsbm_R")
 rm(list = ls())
 #set.seed(1801)
-Rcpp::sourceCpp("sample_SBM_fast.cpp")
-Rcpp::sourceCpp("update_counts.cpp")
-Rcpp::sourceCpp("rdirichlet.cpp")
-Rcpp::sourceCpp("update_z.cpp")
-Rcpp::sourceCpp("update_P.cpp")
-Rcpp::sourceCpp("logf_z_given_A.cpp")
-source("fit_MLSBM_MCMC_fast.R")
+# Rcpp::sourceCpp("sample_SBM_fast.cpp")
+# Rcpp::sourceCpp("update_counts.cpp")
+# Rcpp::sourceCpp("rdirichlet.cpp")
+# Rcpp::sourceCpp("update_z.cpp")
+# Rcpp::sourceCpp("update_P.cpp")
+# Rcpp::sourceCpp("logf_z_given_A.cpp")
+# source("fit_MLSBM_MCMC_fast.R")
 
 # GENERATE DATA
 # Assume L levels generated from common SBM
 # Symmetric, non-reflexive 
-L <- 3 # number of levels
-n <- 100 # number of nodes for each level
+L <- 2 # number of levels
+n <- 1000 # number of nodes for each level
 K <- 3 # number of communities for each level
 pi <- rep(1/K,K) # size of each community
 z <- sample(1:K,
@@ -37,10 +39,10 @@ A <- array(0,dim = c(L,n,n)) # An L x n x n array of edge data
 AL <- vector("list",L)
 for(l in 1:L)
 {
-    A[l,,] <- AL[[l]] <- sample_SBM_fast(z,P)
+    A[l,,] <- AL[[l]] <- sample_sbm(z,P)
 }
-G <- apply(A, 1, graph_from_adjacency_matrix, mode = "undirected")
-plot(G[[3]])
+#G <- apply(A, 1, graph_from_adjacency_matrix, mode = "undirected")
+#plot(G[[3]])
 
 # Set priors
 a0 = 0.5 # Dirichlet prior for pi
@@ -56,15 +58,16 @@ pis = ns/n # initial cluster proportions
 Ps = array(0.4,c(K0,K0)) # initial connectivity matrix
 
 # MCMC settings and storage
-n_iter = 1000 # number of iterations
-burn = 100 # burn in 
+n_iter = 100 # number of iterations
+burn = 0 # burn in 
 n_sim = n_iter - burn # number of stored simulations
 Z = array(0,c(n_sim,n)) # storage for cluster assignments
 PI = array(0,c(n_sim,K0)) # storage for cluster proportions
 PM = array(0,c(n_sim,K0,K0)) # storage for community connection params
 draw_logf_z_given_A = rep(0,n_sim) # P(z|Data) for MAP estimate of z
 
-fit <- fit_MLSBM(AL,K0)
+#fits_ind <- mclapply(AL, fit_sbm, K = K0, n_iter = 10000, mc.cores = L)
+fit_all <- fit_mlsbm(AL,K0)
 
 # start.time<-proc.time()
 # for (i in 1:n_iter){
@@ -147,11 +150,11 @@ fit <- fit_MLSBM(AL,K0)
 #     # Print status
 #     print(paste("Iteration",i))
 #     #print(pis)
-#     if ( round(i/100)==(i/100) ){
-#         print( paste0("iter=",i) )
-#         print( "pi_vec=" )
-#         print( round(pis,3) )
-#     }
+#     # if ( round(i/100)==(i/100) ){
+#     #     print( paste0("iter=",i) )
+#     #     print( "pi_vec=" )
+#     #     print( round(pis,3) )
+#     # }
 # 
 # }
 # run.time<-proc.time()-start.time

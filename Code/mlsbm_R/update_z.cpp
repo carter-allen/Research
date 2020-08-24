@@ -19,7 +19,7 @@ NumericVector update_z(NumericVector zs,
         NumericVector pi_star(K0);
         for(int k = 0; k < K0; k++)
         {
-            pi_star[k] = pis[k];
+            pi_star[k] = log(pis[k]);
             for(int j = 0; j < n; j++)
             {
                 if(i != j)
@@ -27,15 +27,15 @@ NumericVector update_z(NumericVector zs,
                     for(int l = 0; l < L; l++)
                     {
                         NumericMatrix Al = A[l];
-                        pi_star[k] = pi_star[k] * 
-                            pow(Ps(k,zs[j]-1),Al(i,j)) * 
-                            pow((1 - Ps(k,zs[j]-1)),(1-Al(i,j)));
+                        pi_star[k] = ((pi_star[k]) + 
+                            log(pow(Ps(k,zs[j]-1),Al(i,j))) + 
+                            log(pow((1 - Ps(k,zs[j]-1)),(1-Al(i,j)))));
                     }
                 }
             }
             //Rcout << i << "," << k << ":" << pi_star[k] << std::endl;
         }
-        pi_star = pi_star / sum(pi_star);
+        pi_star = exp(pi_star - mean(pi_star)) / sum(exp(pi_star - mean(pi_star)));
         //Rcout << i << ":" << pi_star << std::endl;
         NumericVector zi = Rcpp::RcppArmadillo::sample(classes,1,TRUE,pi_star);
         z_ret[i] = zi[0];
